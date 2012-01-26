@@ -167,8 +167,27 @@ class MsSql extends \lithium\data\source\Database {
             return $result;
         }
 
-        return "'" . $value . "'";
+	    return "'" . $this->_mssql_escape_string((string)$value) . "'"; // original
     }
+
+	protected function _mssql_escape_string($data) {
+		if (!isset($data) or empty($data)) return '';
+		if (is_numeric($data)) return $data;
+
+		$non_displayables = array(
+			'/%0[0-8bcef]/', // url encoded 00-08, 11, 12, 14, 15
+			'/%1[0-9a-f]/', // url encoded 16-31
+			'/[\x00-\x08]/', // 00-08
+			'/\x0b/', // 11
+			'/\x0c/', // 12
+			'/[\x0e-\x1f]/' // 14-31
+		);
+		foreach ($non_displayables as $regex)
+			$data = preg_replace($regex, '', $data);
+		$data = str_replace("'", "''", $data);
+		return $data;
+	}
+
 
     public function schema($query, $resource = null, $context = null) {
         if (is_object($query)) {
@@ -214,12 +233,13 @@ class MsSql extends \lithium\data\source\Database {
     }
 
     public function create($query, array $options = array()) {
+
         if (is_object($query)) {
             $table = $query->source();
 	        $model = $query->model();
 	        $key = $model ? $model::key() : false;
-
-			if (in_array($key, $query->data())) {
+	        $fields = array_keys($query->data());
+			if (in_array($key, $fields)) {
 				$this->_execute("Set IDENTITY_INSERT [dbo].[{$table}] On");
 			}
 

@@ -7,6 +7,10 @@ use lithium\tests\mocks\data\Companies;
 //class CrudTest extends \lithium\test\Integration {
 class CrudTest extends \lithium\tests\integration\data\CrudTest {
 
+	protected $_connection = null;
+
+	protected $_key = null;
+
 	public function setUp() {
 		Companies::config();
 		$this->_key = Companies::key();
