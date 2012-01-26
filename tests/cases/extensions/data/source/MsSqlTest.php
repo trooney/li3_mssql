@@ -30,30 +30,31 @@ class MsSqlTest extends \lithium\test\Unit {
      * @return void
      * @todo Tie into the Environment class to ensure that the test database is being used.
      */
-    public function skip() {
-        $this->skipIf(!MsSql::enabled(), 'MsSql Extension is not loaded');
 
-        $this->_dbConfig = Connections::get('test-mssql', array('config' => true));
-        $hasDb = (isset($this->_dbConfig['adapter']) && $this->_dbConfig['adapter'] == 'MsSql');
-        $message = 'Test database is either unavailable, or not using a MsSql adapter';
-        $this->skipIf(!$hasDb, $message);
+	public function skip() {
+		$this->_dbConfig = Connections::get('test', array('config' => true));
+		$isAvailable = (
+				$this->_dbConfig &&
+						Connections::get('test')->isConnected(array('autoConnect' => true))
+		);
+		$this->skipIf(!$isAvailable, "No test connection available.");
 
-        $this->db = new MsSql($this->_dbConfig);
+		$isDatabase = Connections::get('test') instanceof \lithium\data\source\Database;
+		$this->skipIf(!$isDatabase, "The 'test' connection is not a relational database.");
 
-	    $extensions = array(LITHIUM_APP_PATH . '/libraries', LITHIUM_LIBRARY_PATH);
-	    foreach ($extensions as $extension) {
-		    $sqlFile = $extension . '/li3_mssql/tests/mocks/extensions/data/source/database/adapter/mssql_companies.sql';
-		    if (file_exists($sqlFile)) continue;
-	    }
+		$this->db = Connections::get('test');
+		$mockBase = LITHIUM_LIBRARY_PATH . '/li3_mssql/tests/mocks/extensions/data/source/database/adapter/';
+		$files = array('companies' => '_companies.sql');
+		$files = array_diff_key($files, array_flip($this->db->sources()));
 
-        $sql = file_get_contents($sqlFile);
-        
-        $this->db->read("IF OBJECT_ID('dbo.companies') IS NOT NULL DROP TABLE dbo.companies", array('return' => null));
-        $this->db->read($sql, array('return' => 'resource'));
-    }
-
-
-
+		foreach ($files as $file) {
+			$sqlFile = $mockBase . strtolower($this->_dbConfig['adapter']) . $file;
+			var_dump($sqlFile);
+			$this->skipIf(!file_exists($sqlFile), "SQL file $sqlFile does not exist.");
+			$sql = file_get_contents($sqlFile);
+			$this->db->read($sql, array('return' => 'resource'));
+		}
+	}
 
 	public function setUp() {
         $this->db = new MsSql($this->_dbConfig);
