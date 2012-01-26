@@ -340,41 +340,6 @@ class MsSql extends \lithium\data\source\Database {
         return $entity;
     }
 
-//	/**
-//	 * Updates a record in the database based on the given `Query`.
-//	 *
-//	 * @param object $query A `lithium\data\model\Query` object
-//	 * @param array $options none
-//	 * @return boolean
-//	 * @filter
-//	 */
-//	public function update($query, array $options = array()) {
-//
-//
-//		$model = $query->model();
-//		$whitelist = array();
-//		if (!$options['whitelist']) {
-//			$whitelist = array_keys($model::schema());
-//		}
-//
-//		$key = $model::key();
-//		if (in_array($key, $whitelist)) {
-//			unset($whitelist[array_search($key, $whitelist)]);
-//		}
-//		$options['whitelist'] = $whitelist;
-//		var_dump($options);
-//
-//		return parent::update($query, $options);
-//	}
-
-	/**
-	 * Updates a record in the database based on the given `Query`.
-	 *
-	 * @param object $query A `lithium\data\model\Query` object
-	 * @param array $options none
-	 * @return boolean
-	 * @filter
-	 */
 	public function update($query, array $options = array()) {
 		return $this->_filter(__METHOD__, compact('query', 'options'), function($self, $params) {
 			$query = $params['query'];
