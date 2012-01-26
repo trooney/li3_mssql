@@ -25,7 +25,7 @@ class MsSqlTest extends \lithium\test\Unit {
     public $db = null;
 
     /**
-     * Skip the test if a SqlSrv adapter configuration is unavailable.
+     * Skip the test if a MsSql adapter configuration is unavailable.
      *
      * @return void
      * @todo Tie into the Environment class to ensure that the test database is being used.
@@ -40,16 +40,22 @@ class MsSqlTest extends \lithium\test\Unit {
 
         $this->db = new MsSql($this->_dbConfig);
 
-        $extension = LITHIUM_APP_PATH . '/libraries/li3_mssql';
+	    $extensions = array(LITHIUM_APP_PATH . '/libraries', LITHIUM_LIBRARY_PATH);
+	    foreach ($extensions as $extension) {
+		    $sqlFile = $extension . '/li3_mssql/tests/mocks/extensions/data/source/database/adapter/mssql_companies.sql';
+		    if (file_exists($sqlFile)) continue;
+	    }
 
-        $sqlFile = $extension . '/tests/mocks/extensions/data/source/database/adapter/mssql_companies.sql';
         $sql = file_get_contents($sqlFile);
         
         $this->db->read("IF OBJECT_ID('dbo.companies') IS NOT NULL DROP TABLE dbo.companies", array('return' => null));
         $this->db->read($sql, array('return' => 'resource'));
     }
 
-    public function setUp() {
+
+
+
+	public function setUp() {
         $this->db = new MsSql($this->_dbConfig);
     }
 

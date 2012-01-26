@@ -18,7 +18,7 @@ class MsSql extends \lithium\data\source\Database {
         'entity' => 'lithium\data\entity\Record',
         'set' => 'lithium\data\collection\RecordSet',
         'relationship' => 'lithium\data\model\Relationship',
-        'result' => 'li3_mssql\extensions\data\source\ms_sql\Result'
+        'result' => 'li3_mssql\extensions\data\source\ms_sql\Result',
     );
     protected $_columns = array(
         'primary_key' => array('name' => 'IDENTITY (1, 1) NOT NULL'),
@@ -211,7 +211,13 @@ class MsSql extends \lithium\data\source\Database {
     public function create($query, array $options = array()) {
         if (is_object($query)) {
             $table = $query->source();
-            //$this->_execute("Set IDENTITY_INSERT [dbo].[{$table}] On");
+	        $model = $query->model();
+	        $key = $model ? $model::key() : false;
+
+			if (in_array($key, $query->data())) {
+				$this->_execute("Set IDENTITY_INSERT [dbo].[{$table}] On");
+			}
+
         }
         return parent::create($query, $options);
     }
@@ -224,6 +230,12 @@ class MsSql extends \lithium\data\source\Database {
         return $this->_filter(__METHOD__, compact('sql', 'options'), function($self, $params) {
                     $sql = $params['sql'];
                     $options = $params['options'];
+
+	                // @todo ugly hack to strip out primary key
+					if (isset($options['key'])) {
+						$key = $options['key'];
+						$sql = preg_replace("/\[" . $key . "\]\s=\s'(\d+)',/ ", '', $sql);
+					}
 
                     $resource = mssql_query($sql, $self->connection);
 
@@ -251,12 +263,18 @@ class MsSql extends \lithium\data\source\Database {
         }
     }
 
-    protected function _insertId($query) {
-        $resource = $this->_execute('SELECT @@identity as insertID');
-        
-        list($id) = $resource->next();
-        return ($id && $id !== '0') ? $id : null;
-    }
+	/**
+	 * Gets the last auto-generated ID from the query that inserted a new record.
+	 *
+	 * @param object $query The `Query` object associated with the query which generated
+	 * @return mixed Returns the last inserted ID key for an auto-increment column or a column
+	 *         bound to a sequence.
+	 */
+	protected function _insertId($query) {
+		$resource = $this->_execute('SELECT @@identity as insertId');
+		list($id) = $resource->next();
+		return ($id && $id !== '0') ? $id : null;
+	}
 
     protected function _column($real) {
         if (is_array($real)) {
@@ -317,6 +335,59 @@ class MsSql extends \lithium\data\source\Database {
         return $entity;
     }
 
+//	/**
+//	 * Updates a record in the database based on the given `Query`.
+//	 *
+//	 * @param object $query A `lithium\data\model\Query` object
+//	 * @param array $options none
+//	 * @return boolean
+//	 * @filter
+//	 */
+//	public function update($query, array $options = array()) {
+//
+//
+//		$model = $query->model();
+//		$whitelist = array();
+//		if (!$options['whitelist']) {
+//			$whitelist = array_keys($model::schema());
+//		}
+//
+//		$key = $model::key();
+//		if (in_array($key, $whitelist)) {
+//			unset($whitelist[array_search($key, $whitelist)]);
+//		}
+//		$options['whitelist'] = $whitelist;
+//		var_dump($options);
+//
+//		return parent::update($query, $options);
+//	}
+
+	/**
+	 * Updates a record in the database based on the given `Query`.
+	 *
+	 * @param object $query A `lithium\data\model\Query` object
+	 * @param array $options none
+	 * @return boolean
+	 * @filter
+	 */
+	public function update($query, array $options = array()) {
+		return $this->_filter(__METHOD__, compact('query', 'options'), function($self, $params) {
+			$query = $params['query'];
+			$params = $query->export($self);
+			$sql = $self->renderCommand('update', $params, $query);
+
+			// @todo hack to pass the key which we'll strip out of the SQL
+			$model = $query->model();
+			$key = $model::key();
+			if ($self->invokeMethod('_execute', array($sql, array('key' => $key)))) {
+				if ($query->entity()) {
+					$query->entity()->sync();
+				}
+				return true;
+			}
+			return false;
+		});
+	}
 }
 
 ?>
