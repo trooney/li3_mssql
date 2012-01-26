@@ -48,7 +48,12 @@ class MsSql extends \lithium\data\source\Database {
     );
     protected $_quotes = array("[", "]");
 
+	protected $_is64bit = null;
+
     public function __construct(array $config = array()) {
+	    // @todo hack to detect 64-bit machines, used in quoting int values later
+	    $this->_is64bit = (intval("9223372036854775807") === 9223372036854775807);
+
         $defaults = array('host' => 'localhost:1433');
         parent::__construct($config + $defaults);
     }
@@ -156,7 +161,7 @@ class MsSql extends \lithium\data\source\Database {
     public function value($value, array $schema = array()) {
         if (($result = parent::value($value, $schema)) !== null) {
             // @todo Hack for 32-bit integers
-            if (is_string($value) && preg_match('/[0-9]/', $value)) {
+            if (!$this->_is64bit && is_string($value) && preg_match('/[0-9]/', $value)) {
                 $result = (strval(intval($value)) == $value) ? intval($value) : strval($value);
             }
             return $result;
