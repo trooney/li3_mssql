@@ -114,7 +114,7 @@ class MsSqlTest extends \lithium\test\Unit {
         $this->assertEqual($expected, $result);
 
         // @todo Escaping fails
-        $expected = "'\'this string is escaped\''";
+        $expected = "'''this string is escaped'''";
         $result = $this->db->value("'this string is escaped'");
         $this->assertTrue(is_string($result));
         $this->assertEqual($expected, $result);

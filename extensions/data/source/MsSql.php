@@ -171,7 +171,6 @@ class MsSql extends \lithium\data\source\Database {
             }
             return $result;
         }
-
 	    return "'" . $this->_mssql_escape_string((string)$value) . "'"; // original
     }
 
@@ -187,6 +186,7 @@ class MsSql extends \lithium\data\source\Database {
 			'/\x0c/', // 12
 			'/[\x0e-\x1f]/' // 14-31
 		);
+
 		foreach ($non_displayables as $regex)
 			$data = preg_replace($regex, '', $data);
 		$data = str_replace("'", "''", $data);
