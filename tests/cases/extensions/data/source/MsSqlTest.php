@@ -49,7 +49,6 @@ class MsSqlTest extends \lithium\test\Unit {
 
 		foreach ($files as $file) {
 			$sqlFile = $mockBase . strtolower($this->_dbConfig['adapter']) . $file;
-			var_dump($sqlFile);
 			$this->skipIf(!file_exists($sqlFile), "SQL file $sqlFile does not exist.");
 			$sql = file_get_contents($sqlFile);
 			$this->db->read($sql, array('return' => 'resource'));
@@ -72,7 +71,7 @@ class MsSqlTest extends \lithium\test\Unit {
             'autoConnect' => false,
             'port' => 1433,
             'persistent' => true,
-            'host' => 'localhost:1433',
+            'host' => 'localhost',
             'login' => 'root',
             'password' => '',
             'database' => NULL,
@@ -115,10 +114,10 @@ class MsSqlTest extends \lithium\test\Unit {
         $this->assertEqual($expected, $result);
 
         // @todo Escaping fails
-//        $expected = "'\'this string is escaped\''";
-//        $result = $this->db->value("'this string is escaped'");
-//        $this->assertTrue(is_string($result));
-//        $this->assertEqual($expected, $result);
+        $expected = "'\'this string is escaped\''";
+        $result = $this->db->value("'this string is escaped'");
+        $this->assertTrue(is_string($result));
+        $this->assertEqual($expected, $result);
 
         $this->assertIdentical(1, $this->db->value(true));
         $this->assertIdentical(1, $this->db->value('1'));

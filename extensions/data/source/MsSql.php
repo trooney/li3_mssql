@@ -54,7 +54,10 @@ class MsSql extends \lithium\data\source\Database {
 	    // @todo hack to detect 64-bit machines, used in quoting int values later
 	    $this->_is64bit = (intval("9223372036854775807") === 9223372036854775807);
 
-        $defaults = array('host' => 'localhost:1433');
+        $defaults = array(
+	        'host' => 'localhost',
+	        'port' => '1433'
+		);
         parent::__construct($config + $defaults);
     }
 
@@ -75,12 +78,14 @@ class MsSql extends \lithium\data\source\Database {
         $config = $this->_config;
         $this->_isConnected = false;
         $host = $config['host'];
+	    $port = $config['port'];
+	    $separator = (PHP_OS == 'Windows') ? ',' : ':';
 
         if (!$config['database']) {
             return false;
         }
 
-        $this->connection = mssql_connect($host, $config['login'], $config['password'], true);
+        $this->connection = mssql_connect($host . $separator . $port, $config['login'], $config['password'], true);
 
         if (!$this->connection) {
             return false;
@@ -170,8 +175,8 @@ class MsSql extends \lithium\data\source\Database {
 	    return "'" . $this->_mssql_escape_string((string)$value) . "'"; // original
     }
 
-	protected function _mssql_escape_string($data) {
-		if (!isset($data) or empty($data)) return '';
+	// Fugly escaping that doesn't work quite right.
+	protected function _mssql_escape_string($data = '') {
 		if (is_numeric($data)) return $data;
 
 		$non_displayables = array(
