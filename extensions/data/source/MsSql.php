@@ -261,11 +261,11 @@ class MsSql extends \lithium\data\source\Database {
                     $sql = $params['sql'];
                     $options = $params['options'];
 
-	                // @todo ugly hack to strip out primary key
-					if (isset($options['key'])) {
-						$key = $options['key'];
-						$sql = preg_replace("/\[" . $key . "\]\s=\s'(\d+)',/ ", '', $sql);
-					}
+//	                // @todo ugly hack to strip out primary key
+//					if (isset($options['key'])) {
+//						$key = $options['key'];
+//						$sql = preg_replace("/\[" . $key . "\]\s=\s'(\d+)',/ ", '', $sql);
+//					}
 
                     $resource = mssql_query($sql, $self->connection);
 
@@ -365,13 +365,17 @@ class MsSql extends \lithium\data\source\Database {
 	public function update($query, array $options = array()) {
 		return $this->_filter(__METHOD__, compact('query', 'options'), function($self, $params) {
 			$query = $params['query'];
-			$params = $query->export($self);
-			$sql = $self->renderCommand('update', $params, $query);
 
-			// @todo hack to pass the key which we'll strip out of the SQL
-			$model = $query->model();
-			$key = $model::key();
-			if ($self->invokeMethod('_execute', array($sql, array('key' => $key)))) {
+			// @todo hack to strip primary key from query
+			$whitelist = $query->whitelist();
+			unset($whitelist[$query->key()]);
+			$query->whitelist($whitelist);
+
+			$params = $query->export($self);
+
+			$sql = $self->renderCommand('update', $params);
+
+			if ($self->invokeMethod('_execute', array($sql))) {
 				if ($query->entity()) {
 					$query->entity()->sync();
 				}
