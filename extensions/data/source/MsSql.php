@@ -362,13 +362,6 @@ class MsSql extends \lithium\data\source\Database {
         return $column;
     }
 
-    protected function _entityName($entity) {
-        if (class_exists($entity, false) && method_exists($entity, 'meta')) {
-            $entity = $entity::meta('name');
-        }
-        return $entity;
-    }
-
 	public function update($query, array $options = array()) {
 		return $this->_filter(__METHOD__, compact('query', 'options'), function($self, $params) {
 			$query = $params['query'];
