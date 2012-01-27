@@ -350,6 +350,10 @@ class MsSql extends \lithium\data\source\Database {
                 break;
             case preg_match('/float|double|decimal/', $column['type']):
                 $column['type'] = 'float';
+                $length = intval($column['length']);
+                $precision = intval(preg_replace('/(.+),/', '', $column['length']));
+                unset($column['length']);
+				$column += compact('length', 'precision');
                 break;
             default:
                 $column['type'] = 'text';

@@ -141,8 +141,8 @@ class MsSqlTest extends \lithium\test\Unit {
         $this->assertIdentical(array('type' => 'text'), $result);
 
         // @todo Decimals fail
-//        $result = $this->db->invokeMethod('_column', array('decimal(12,2)'));
-//        $this->assertIdentical(array('type' => 'float', 'length' => 12, 'precision' => 2), $result);
+        $result = $this->db->invokeMethod('_column', array('decimal(12,2)'));
+        $this->assertIdentical(array('type' => 'float', 'length' => 12, 'precision' => 2), $result);
 
         $result = $this->db->invokeMethod('_column', array('int(11)'));
         $this->assertIdentical(array('type' => 'integer', 'length' => '11'), $result);
